@@ -189,7 +189,7 @@ kubectl get svc -n kagent
 kagent-enterprise-ui             LoadBalancer   x.x.x.x   x.x.x.x   9000:31516/TCP,8080:31314/TCP,80:30674/TCP,8090:32263/TCP,8091:32015/TCP,4316:31332/TCP,4317:32230/TCP,4318:30388/TCP   3m6s
 ```
 
-## Declarative Agent And MCP Server Configuration
+## Declarative Agent And MCP Server Configuration (SAP CAP MCP Server)
 
 The config below It works very much like a package/library import in application code.
 
@@ -202,73 +202,66 @@ When you apply this `MCPServer` resource to your Kubernetes cluster via kagent:
 
 kagent handles the "package resolution" and deployment automatically. You just declare what MCP server you want (like declaring a dependency in `package.json` or `requirements.txt`), and kagent takes care of fetching, installing, and running it in your cluster.
 
-This is the power of the declarative approach. You specify what you want (the `kubernetes-mcp-server`), and kagent figures out how to get it running.
+This is the power of the declarative approach. You specify what you want (the `sap-cap-mcp-server`), and kagent figures out how to get it running.
 
-Don't specify port configurations since stdio transport doesn't use HTTP
+https://github.com/cap-js/mcp-server
+https://cap.cloud.sap/docs/
 
-1. Create a new MCP Server object in Kubernetes
+1. Create a new SAP CAP MCP Server object in Kubernetes
 ```
 kubectl apply -f - <<EOF
 apiVersion: kagent.dev/v1alpha1
 kind: MCPServer
 metadata:
-  name: mcp-kubernetes-server
+  name: mcp-sap-cap-server
   namespace: kagent
 spec:
   deployment:
     args:
-    - kubernetes-mcp-server@latest
+    - "-y"
+    - "@cap-js/mcp-server@latest"
     cmd: npx
   stdioTransport: {}
   transportType: stdio
 EOF
 ```
 
-2. Create a new Agent and use the MCP Server you created in step 1
+2. Create a new Agent and use the SAP CAP MCP Server you created in step 1
 ```
 kubectl apply -f - <<EOF
 apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
-  name: kubernetes-mcp-agent
+  name: sap-cap-agent
   namespace: kagent
 spec:
-  description: This agent can use a single tool to expand it's Kubernetes knowledge for troubleshooting and deployment
+  description: This agent can use SAP Cloud Application Programming Model (CAP) tools to help with AI-assisted development of CAP applications
   type: Declarative
   declarative:
     modelConfig: default-model-config
     systemMessage: |-
-      You're a friendly and helpful agent that uses the Kubernetes tool to help troubleshooting and deploy environments
-  
+      You're a friendly and helpful agent that uses SAP CAP tools to assist with cloud application development
+
       # Instructions
-  
+
       - If user question is unclear, ask for clarification before running any tools
       - Always be helpful and friendly
       - If you don't know how to answer the question DO NOT make things up
         respond with "Sorry, I don't know how to answer that" and ask the user to further clarify the question
-  
+      - Use search_model to find CDS model definitions (entities, fields, services, annotations)
+      - Use search_docs to search CAP documentation for development guidance
+
       # Response format
       - ALWAYS format your response as Markdown
       - Your response will include a summary of actions you took and an explanation of the result
     tools:
     - type: McpServer
       mcpServer:
-        name: mcp-kubernetes-server
+        name: mcp-sap-cap-server
         kind: MCPServer
         toolNames:
-        - events_list
-        - namespaces_list
-        - pods_list
-        - pods_list_in_namespace
-        - pods_get
-        - pods_delete
-        - pods_log
-        - pods_exec
-        - pods_run
-        - resources_list
-        - resources_get
-        - resources_create_or_update
-        - resources_delete
+        - search_model
+        - search_docs
 EOF
 ```
 
@@ -279,7 +272,7 @@ kubectl get agents -n kagent
 
 4. Feel free to dive into how it looks "underneath the hood"
 ```
-kubectl describe agent kubernetes-mcp-agent -n kagent
+kubectl describe agent sap-cap-agent -n kagent
 ```
 
 ## Monitoring And Observability Setup
