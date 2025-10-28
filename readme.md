@@ -558,7 +558,7 @@ curl "$INGRESS_GW_ADDRESS:8080/anthropic" -H content-type:application/json -H x-
 9. You can check that the request went through the Gateway:
 
 ```
-kubectl logs -n gloo-system agentgateway-b6658b4f4-js6m2 --tail=50 | grep -i "request\|error\|anthropic"
+kubectl logs -n gloo-system agentgateway-b6658b4f4-26pdf --tail=50 | grep -i "request\|error\|anthropic"
 ```
 
 You should now be able to see the metrics in Prometheus
@@ -651,7 +651,7 @@ kubectl patch deployment mlevan-fe -n default -p '{"spec":{"template":{"spec":{"
 kubectl get pods
 
 
-## MCP Server
+## Bonus: MCP Server ON Kubernetes
 1. Create an MCP config so you can see the metrics for MCP Servers
 
 ```
