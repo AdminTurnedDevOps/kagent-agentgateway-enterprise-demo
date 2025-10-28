@@ -601,8 +601,6 @@ That's why you can use kmcp instead.
 
 kmcp is a way to create MCP Servers for local development or to deploy to a Kubernetes environment. Utilizing objects via the kmcp CRDs like MCPServer, you can declaratively manage your MCP Servers within the orchestration layer (Kubernetes) that you're already used to. Because it's deployed within Kubernetes, you can manage your MCP Servers like any other workload.
 
-1. Minikube (because if you are building the container image on an ARM-based Mac, it may not work in another environment)
-
 1. Download the kmcp binary
 ```
 curl -fsSL https://raw.githubusercontent.com/kagent-dev/kmcp/refs/heads/main/scripts/get-kmcp.sh | bash
@@ -648,10 +646,13 @@ spec:
     port: 3000
     cmd: "python"
     args: ["src/main.py"]
-    nodeSelector:
-      kubernetes.io/arch: arm64
   transportType: "stdio"
 EOF
+```
+
+8. If you built your MCP Server container image on something like an M4 Mac (ARM-based architecture), you'll need to add in an ARM-based Worker Node and patch your deployment for to select the ARM-based node.
+```
+kubectl patch deployment mlevan-fe -n default -p '{"spec":{"template":{"spec":{"nodeSelector":{"kubernetes.io/arch":"arm64"}}}}}'
 ```
 
 kubectl get pods
