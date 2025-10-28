@@ -568,6 +568,11 @@ curl "$INGRESS_GW_ADDRESS:8080/anthropic" -H content-type:application/json -H x-
 kubectl logs -n gloo-system agentgateway-b6658b4f4-js6m2 --tail=50 | grep -i "request\|error\|anthropic"
 ```
 
+You should now be able to see the metrics in Prometheus
+
+![](images/prom.png)
+![](images/metrics.png)
+
 ## Traces
 To look at traces, you can see the logs and the trace ID. The reason why you don't have to do another configuration is because when you set up the gateway in the **Testong LLM Connectivity** section, under the `infrastructure` mapping via the `Gateway` object, traces were enabled.
 
@@ -595,6 +600,8 @@ Although that's not out of the ordinary (client/server programmatic configuratio
 That's why you can use kmcp instead.
 
 kmcp is a way to create MCP Servers for local development or to deploy to a Kubernetes environment. Utilizing objects via the kmcp CRDs like MCPServer, you can declaratively manage your MCP Servers within the orchestration layer (Kubernetes) that you're already used to. Because it's deployed within Kubernetes, you can manage your MCP Servers like any other workload.
+
+1. Minikube (because if you are building the container image on an ARM-based Mac, it may not work in another environment)
 
 1. Download the kmcp binary
 ```
@@ -641,6 +648,8 @@ spec:
     port: 3000
     cmd: "python"
     args: ["src/main.py"]
+    nodeSelector:
+      kubernetes.io/arch: arm64
   transportType: "stdio"
 EOF
 ```
@@ -752,8 +761,3 @@ curl "http://${GATEWAY_IP}:8080/" \
     "id": 1
   }'
 ```
-
-You should now be able to see the metrics in Prometheus
-
-![](images/prom.png)
-![](images/metrics.png)
