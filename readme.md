@@ -65,7 +65,7 @@ kubectl create secret generic jwt -n kagent --from-file=jwt=/tmp/key.pem
 5. Install the Gloo Operator
 ```
 helm upgrade -i gloo-operator oci://us-docker.pkg.dev/solo-public/gloo-operator-helm/gloo-operator \
---version 0.4.0 \
+--version 0.4.1 \
 -n kagent \
 --create-namespace \
 --values - <<EOF
@@ -81,8 +81,6 @@ EOF
 
 6. Set up kagent enterprise via the Controller
 
-The reason why you need `frontend.uiBackendHost:localhost` is because there is a bug in the UX that points to `localhost:8090` instead of the kagents ALB/public-facing UI
-
 ```
 kubectl apply -n kagent -f - <<EOF
 apiVersion: v1
@@ -90,22 +88,9 @@ kind: ConfigMap
 metadata:
   name: gloo-extensions-config
 data:
+  # Solo Enterprise for kagent settings for local kind cluster-1
   values.management: |
-    cluster: ${CLUSTER1_NAME}
-    ui:
-      frontend:
-        uiBackendHost: "http://localhost:8090"
-  values.gloo: |
-    agentgateway:
-      enabled: true
-  values.kagent: |
-    controller:
-      image:
-        registry: us-docker.pkg.dev/solo-public
-        repository: kagent-enterprise/kagent-enterprise-kagent-enterprise-controller
-        tag: 0.1.5
-    oidc:
-      enabled: true
+    cluster: $CLUSTER1_NAME
 ---
 apiVersion: operator.gloo.solo.io/v1
 kind: ServiceMeshController
@@ -117,6 +102,7 @@ spec:
   dataplaneMode: Ambient
   installNamespace: istio-system
   version: 1.27.1
+  scalingProfile: Demo
 ---
 apiVersion: operator.gloo.solo.io/v1
 kind: GatewayController
@@ -130,7 +116,7 @@ kind: KagentManagementController
 metadata:
   name: kagent-enterprise
 spec:
-  version: 0.1.5
+  version: 0.1.9
   repository:
     url: oci://us-docker.pkg.dev/solo-public/kagent-enterprise-helm/charts
   oidc:
@@ -146,7 +132,7 @@ kind: KagentController
 metadata:
   name: kagent
 spec:
-  version: 0.1.5
+  version: 0.1.9
   repository:
     url: oci://us-docker.pkg.dev/solo-public/kagent-enterprise-helm/charts
   apiKey:
@@ -177,12 +163,7 @@ kubectl get po -n kagent -l app.kubernetes.io/instance=kagent-enterprise
 kubectl get po -n kagent -l app=kagent
 ```
 
-8. Open up a terminal and forward the backend (per the current bug in step 6)
-```
-kubectl port-forward service/kagent-enterprise-ui -n kagent 8090:8090
-```
-
-9. Get the ALBs public IP for the UI service and open it in a browser:
+8. Get the ALBs public IP for the UI service and open it in a browser:
 ```
 kubectl get svc -n kagent
 
@@ -651,7 +632,7 @@ kubectl patch deployment mlevan-fe -n default -p '{"spec":{"template":{"spec":{"
 kubectl get pods
 
 
-## Bonus: MCP Server ON Kubernetes
+## Bonus: MCP Server On Kubernetes
 1. Create an MCP config so you can see the metrics for MCP Servers
 
 ```
