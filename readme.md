@@ -109,7 +109,7 @@ kind: GatewayController
 metadata:
   name: gloo-gateway
 spec:
-  version: 2.0.0
+  version: 2.0.1
 ---
 apiVersion: operator.gloo.solo.io/v1
 kind: KagentManagementController
@@ -463,22 +463,21 @@ A Backend resource to define a backing destination that you want kgateway to rou
 ```
 kubectl apply -f- <<EOF
 apiVersion: gateway.kgateway.dev/v1alpha1
-kind: Backend
+kind: AgentgatewayBackend
 metadata:
   labels:
     app: agentgateway
   name: anthropic
   namespace: gloo-system
 spec:
-  type: AI
   ai:
-    llm:
+    provider:
         anthropic:
-          authToken:
-            kind: SecretRef
-            secretRef:
-              name: anthropic-secret
           model: "claude-3-5-haiku-latest"
+  policies:
+    auth:
+      secretRef:
+        name: anthropic-secret
 EOF
 ```
 
@@ -675,12 +674,11 @@ EOF
 ```
 kubectl apply -f- <<EOF
 apiVersion: gateway.kgateway.dev/v1alpha1
-kind: Backend
+kind: AgentgatewayBackend
 metadata:
   name: mcp-backend
   namespace: kgateway-system
 spec:
-  type: MCP
   mcp:
     targets:
     - name: mcp-target
