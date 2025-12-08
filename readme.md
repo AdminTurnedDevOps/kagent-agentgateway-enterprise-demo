@@ -65,7 +65,7 @@ kubectl create secret generic jwt -n kagent --from-file=jwt=/tmp/key.pem
 5. Install the Gloo Operator
 ```
 helm upgrade -i gloo-operator oci://us-docker.pkg.dev/solo-public/gloo-operator-helm/gloo-operator \
---version 0.4.1 \
+--version 0.4.2 \
 -n kagent \
 --create-namespace \
 --values - <<EOF
@@ -88,7 +88,7 @@ kind: ConfigMap
 metadata:
   name: gloo-extensions-config
 data:
-  # Solo Enterprise for kagent settings for local kind cluster-1
+  # Solo Enterprise for kagent settings
   values.management: |
     cluster: $CLUSTER1_NAME
 ---
@@ -116,7 +116,7 @@ kind: KagentManagementController
 metadata:
   name: kagent-enterprise
 spec:
-  version: 0.1.9
+  version: 0.1.10
   repository:
     url: oci://us-docker.pkg.dev/solo-public/kagent-enterprise-helm/charts
   oidc:
