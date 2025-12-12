@@ -175,6 +175,19 @@ EOF
 ```
 
 ```
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kagent-anthropic
+  namespace: kagent
+type: Opaque
+stringData:
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+EOF
+```
+
+```
 helm upgrade -i kagent-mgmt \
 oci://us-docker.pkg.dev/developers-369321/kagent-enterprise-public-nonprod/charts/management \
 -n kagent --create-namespace \
@@ -215,12 +228,12 @@ EOF
 ```
 
 ```
+# Generate the RSA key
 openssl genrsa -out /tmp/key.pem 2048
 
-  kubectl create secret generic jwt \
-  -n kagent --context ${context} \
-  --from-file=jwt=/tmp/key.pem \
-  --dry-run=client -o yaml | kubectl apply --context ${context} -f -
+# Create the secret in the kagent namespace
+kubectl create secret generic jwt -n kagent --from-file=jwt=/tmp/key.pem
+
 ```
 
 ```
