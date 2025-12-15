@@ -13,9 +13,22 @@ export ANTHROPIC_API_KEY=
 ```
 export ISTIO_VERSION=1.27.0
 export ISTIO_IMAGE=${ISTIO_VERSION}-solo
-export REPO=us-docker.pkg.dev/soloio-img/istio
-export HELM_REPO=us-docker.pkg.dev/soloio-img/istio-helm
+export REPO_KEY=
+export REPO=us-docker.pkg.dev/gloo-mesh/istio-${REPO_KEY}
+export HELM_REPO=us-docker.pkg.dev/gloo-mesh/istio-helm-${REPO_KEY}
 export SOLO_ISTIO_LICENSE_KEY=
+```
+
+```
+OS=$(uname | tr '[:upper:]' '[:lower:]' | sed -E 's/darwin/osx/')
+ARCH=$(uname -m | sed -E 's/aarch/arm/; s/x86_64/amd64/; s/armv7l/armv7/')
+
+mkdir -p ~/.istioctl/bin
+curl -sSL https://storage.googleapis.com/istio-binaries-$REPO_KEY/1.27.1-solo/istioctl-1.27.1-solo-$OS-$ARCH.tar.gz | tar xzf - -C ~/.istioctl/bin
+chmod +x ~/.istioctl/bin/istioctl
+
+export PATH=${HOME}/.istioctl/bin:${PATH}
+istioctl version --remote=false
 ```
 
 ```
