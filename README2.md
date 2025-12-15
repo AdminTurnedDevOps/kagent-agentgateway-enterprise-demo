@@ -13,7 +13,7 @@ export ANTHROPIC_API_KEY=
 ```
 export ISTIO_VERSION=1.27.0
 export ISTIO_IMAGE=${ISTIO_VERSION}-solo
-export REPO_KEY=
+export REPO_KEY=d11c80c0c3fc
 export REPO=us-docker.pkg.dev/gloo-mesh/istio-${REPO_KEY}
 export HELM_REPO=us-docker.pkg.dev/gloo-mesh/istio-helm-${REPO_KEY}
 export SOLO_ISTIO_LICENSE_KEY=
