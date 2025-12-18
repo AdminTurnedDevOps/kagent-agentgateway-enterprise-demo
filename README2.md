@@ -99,7 +99,7 @@ cni:
   priorityClassName: ""
 EOF
 
-# Patch the DaemonSet to remove priority class (workaround for chart not respecting the value)
+# Patch the DaemonSet to remove priority class (workaround for chart not respecting the value) if on GKE
 kubectl patch daemonset istio-cni-node -n istio-system -p '{"spec":{"template":{"spec":{"priorityClassName":null}}}}'
 ```
 
@@ -124,7 +124,7 @@ variant: distroless
 priorityClassName: ""
 EOF
 
-# Patch the DaemonSet to remove priority class (workaround for chart not respecting the value)
+# Patch the DaemonSet to remove priority class (workaround for chart not respecting the value) if on GKE
 kubectl patch daemonset ztunnel -n istio-system -p '{"spec":{"template":{"spec":{"priorityClassName":null}}}}'
 ```
 
@@ -158,6 +158,10 @@ kubectl get pods -n gloo-system
 
 ```
 export KAGENT_ENT_VERSION=0.1.10-2025-12-09-main-1d5ad1ac
+```
+
+```
+kubectl create ns kagent
 ```
 
 ```
@@ -230,10 +234,7 @@ EOF
 ```
 # Generate the RSA key
 openssl genrsa -out /tmp/key.pem 2048
-
-# Create the secret in the kagent namespace
 kubectl create secret generic jwt -n kagent --from-file=jwt=/tmp/key.pem
-
 ```
 
 ```
