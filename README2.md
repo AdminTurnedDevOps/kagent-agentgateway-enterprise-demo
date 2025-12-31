@@ -16,7 +16,7 @@ export ISTIO_IMAGE=${ISTIO_VERSION}-solo
 export REPO_KEY=d11c80c0c3fc
 export REPO=us-docker.pkg.dev/gloo-mesh/istio-${REPO_KEY}
 export HELM_REPO=us-docker.pkg.dev/gloo-mesh/istio-helm-${REPO_KEY}
-export SOLO_ISTIO_LICENSE_KEY=
+export SOLO_ISTIO_LICENSE_KEY
 ```
 
 ```
@@ -93,7 +93,7 @@ excludeNamespaces:
 global:
   hub: ${REPO}
   tag: ${ISTIO_IMAGE}
-  platform: gke
+  #platform: gke
 profile: ambient
 cni:
   priorityClassName: ""
@@ -157,43 +157,12 @@ kubectl get pods -n gloo-system
 ## Install Kagent
 
 ```
-export KAGENT_ENT_VERSION=0.1.10-2025-12-09-main-1d5ad1ac
-```
-
-```
-kubectl create ns kagent
-```
-
-```
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Secret
-metadata:
-  name: kagent-backend-secret
-  namespace: kagent
-type: Opaque
-stringData:
-  clientSecret: ${BACKEND_CLIENT_SECRET}
-  secret: ${BACKEND_CLIENT_SECRET}
-EOF
-```
-
-```
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Secret
-metadata:
-  name: kagent-anthropic
-  namespace: kagent
-type: Opaque
-stringData:
-  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-EOF
+export KAGENT_ENT_VERSION=0.1.10-nightly-2025-12-30-7724be58
 ```
 
 ```
 helm upgrade -i kagent-mgmt \
-oci://us-docker.pkg.dev/developers-369321/kagent-enterprise-public-nonprod/charts/management \
+oci://us-docker.pkg.dev/developers-369321/solo-enterprise-public-nonprod/charts/management \
 -n kagent --create-namespace \
 --version $KAGENT_ENT_VERSION \
 -f - <<EOF
@@ -214,16 +183,12 @@ service:
   clusterIP: ""
 ui:
   backend:
-    repository: kagent-enterprise-public-nonprod
     oidc:
       clientId: ${OIDC_BACKEND}
       secret: ${BACKEND_CLIENT_SECRET}
   frontend:
-    repository: kagent-enterprise-public-nonprod
     oidc:
       clientId: ${OIDC_FRONTEND}
-tunnelserver:
-  repository: kagent-enterprise-public-nonprod
 clickhouse:
   enabled: true
 tracing:
