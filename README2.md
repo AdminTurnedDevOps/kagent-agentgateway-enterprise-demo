@@ -16,7 +16,7 @@ export ISTIO_IMAGE=${ISTIO_VERSION}-solo
 export REPO_KEY=d11c80c0c3fc
 export REPO=us-docker.pkg.dev/gloo-mesh/istio-${REPO_KEY}
 export HELM_REPO=us-docker.pkg.dev/gloo-mesh/istio-helm-${REPO_KEY}
-export SOLO_ISTIO_LICENSE_KEY
+export SOLO_ISTIO_LICENSE_KEY=
 ```
 
 ```
@@ -93,7 +93,7 @@ excludeNamespaces:
 global:
   hub: ${REPO}
   tag: ${ISTIO_IMAGE}
-  #platform: gke
+  platform: gke
 profile: ambient
 cni:
   priorityClassName: ""
@@ -135,18 +135,18 @@ kubectl get pods -n istio-system
 ## Install Gloo Gateway
 
 ```
-helm upgrade -i gloo-gateway-crds oci://us-docker.pkg.dev/solo-public/gloo-gateway/charts/gloo-gateway-crds \
+helm upgrade -i agentgateway-crds oci://us-docker.pkg.dev/solo-public/gloo-gateway/charts/enterprise-agentgateway-crds \
   --create-namespace \
   --namespace gloo-system \
-  --version 2.0.1
+  --version 2.1.0-beta.2
 ```
 
 ```
-helm upgrade -i gloo-gateway oci://us-docker.pkg.dev/solo-public/gloo-gateway/charts/gloo-gateway \
+helm upgrade -i agentgateway oci://us-docker.pkg.dev/solo-public/gloo-gateway/charts/enterprise-agentgateway \
   -n gloo-system \
-  --version 2.0.1 \
+  --version 2.1.0-beta.2 \
   --set agentgateway.enabled=true \
-  --set licensing.agentgatewayLicenseKey=${AGENTGATEWAY_LICENSE_KEY} \
+  --set licensing.licenseKey=${AGENTGATEWAY_LICENSE_KEY} \
   --set licensing.glooGatewayLicenseKey=${GLOO_GATEWAY_LICENSE_KEY}
 ```
 
@@ -157,7 +157,11 @@ kubectl get pods -n gloo-system
 ## Install Kagent
 
 ```
-export KAGENT_ENT_VERSION=0.1.10-nightly-2025-12-30-7724be58
+kubectl label namespaces kagent istio.io/dataplane-mode=ambient
+```
+
+```
+export KAGENT_ENT_VERSION=0.1.10-2026-01-05-torey-ui-access-policy-wizard-hookup-362d4d16
 ```
 
 ```
