@@ -157,11 +157,7 @@ kubectl get pods -n gloo-system
 ## Install Kagent
 
 ```
-kubectl label namespaces kagent istio.io/dataplane-mode=ambient
-```
-
-```
-export KAGENT_ENT_VERSION=0.1.10-2026-01-05-torey-ui-access-policy-wizard-hookup-362d4d16
+export KAGENT_ENT_VERSION=0.1.10-nightly-2026-01-08-3f0e895b
 ```
 
 ```
@@ -250,6 +246,10 @@ kmcp:
   image:
     repository: kagent-enterprise-public-nonprod
 EOF
+```
+
+```
+kubectl label namespaces kagent istio.io/dataplane-mode=ambient
 ```
 
 ```
