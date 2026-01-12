@@ -93,7 +93,7 @@ excludeNamespaces:
 global:
   hub: ${REPO}
   tag: ${ISTIO_IMAGE}
-  platform: gke
+  #platform: gke
 profile: ambient
 cni:
   priorityClassName: ""
@@ -157,14 +157,15 @@ kubectl get pods -n gloo-system
 ## Install Kagent
 
 ```
-export KAGENT_ENT_VERSION=0.1.10-nightly-2026-01-08-3f0e895b
+export KAGENT_MGMT_ENT_VERSION=0.2.0
+export KAGENT_ENT_VERSION=0.2.1-nightly-2026-01-11-ae65f848
 ```
 
 ```
 helm upgrade -i kagent-mgmt \
-oci://us-docker.pkg.dev/developers-369321/solo-enterprise-public-nonprod/charts/management \
+oci://us-docker.pkg.dev/solo-public/solo-enterprise-helm/charts/management \
 -n kagent --create-namespace \
---version $KAGENT_ENT_VERSION \
+--version $KAGENT_MGMT_ENT_VERSION \
 -f - <<EOF
 imagePullSecrets: []
 global:
