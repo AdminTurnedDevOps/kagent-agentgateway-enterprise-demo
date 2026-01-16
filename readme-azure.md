@@ -2,6 +2,8 @@
 
 ## Env Vars
 ```
+export GLOO_GATEWAY_LICENSE_KEY=
+
 export AGENTGATEWAY_LICENSE_KEY=
 
 export ANTHROPIC_API_KEY=
@@ -27,6 +29,10 @@ chmod +x ~/.istioctl/bin/istioctl
 
 export PATH=${HOME}/.istioctl/bin:${PATH}
 istioctl version --remote=false
+```
+
+```
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml 
 ```
 
 ```
@@ -87,7 +93,7 @@ excludeNamespaces:
 global:
   hub: ${REPO}
   tag: ${ISTIO_IMAGE}
-  platform: gke
+  #platform: gke
 profile: ambient
 cni:
   priorityClassName: ""
@@ -129,61 +135,51 @@ kubectl get pods -n istio-system
 ## Install Agentgateway
 
 ```
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml 
-```
-
-```
 helm upgrade -i agentgateway-crds oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway-crds \
   --create-namespace \
-  --namespace agentgateway-system  \
+  --namespace agentgateway-system \
   --version 2.1.0-rc.2
 ```
 
 ```
 helm upgrade -i agentgateway oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway \
-  -n agentgateway-system  \
+  -n agentgateway-system \
   --version 2.1.0-rc.2 \
   --set agentgateway.enabled=true \
   --set licensing.licenseKey=${AGENTGATEWAY_LICENSE_KEY}
 ```
 
 ```
-kubectl get pods -n agentgateway-system
+kubectl get pods -n gloo-system
 ```
 
 ## Install Kagent
 
 ```
 export KAGENT_MGMT_ENT_VERSION=0.2.0
-
-export KAGENT_MGMT_ENT_VERSION=0.2.1-nightly-2026-01-16-e2b3db5b
 export KAGENT_ENT_VERSION=0.2.1-nightly-2026-01-11-ae65f848
 ```
 
 ```
 helm upgrade -i kagent-mgmt \
-oci://us-docker.pkg.dev/developers-369321/solo-enterprise-public-nonprod/charts/management \
+oci://us-docker.pkg.dev/solo-public/solo-enterprise-helm/charts/management \
 -n kagent --create-namespace \
 --version $KAGENT_MGMT_ENT_VERSION \
 -f - <<EOF
-products:
-  kagent:
-    enabled: true
 imagePullSecrets: []
 global:
   imagePullPolicy: IfNotPresent
 oidc:
   issuer: ${OIDC_ISSUER}
+  additionalScopes: #For Azure
+    - api://d6957938-c281-4312-97d2-eefbfc44f468/kagent-backend
 rbac:
   roleMapping:
-    roleMapper: "claims.Groups.transformList(i, v, v in rolesMap, rolesMap[v])"
+    roleMapper: "has(claims.Groups) ? claims.Groups.transformList(i, v, v in rolesMap, rolesMap[v]) : (has(claims.groups) ? claims.groups.transformList(i, v, v in rolesMap, rolesMap[v]) : [])"
     roleMappings:
-      admins: "global.Admin"
-      readers: "global.Reader"
-      writers: "global.Writer"
+      966e120a-237f-44fd-9b86-049da1106a93: "global.Admin"
 service:
-  type: LoadBalancer
-  clusterIP: ""
+  type: ClusterIP
 ui:
   backend:
     oidc:
@@ -198,6 +194,59 @@ tracing:
   verbose: true
 EOF
 ```
+
+Create TLS certificate and Gateway with Istio:
+```
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout /tmp/tls.key -out /tmp/tls.crt \
+  -subj "/CN=kagent/O=kagent"
+
+kubectl create secret tls kagent-gateway-tls -n kagent \
+  --cert=/tmp/tls.crt --key=/tmp/tls.key
+```
+
+```
+kubectl apply -f - <<EOF
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: kagent-gateway
+  namespace: kagent
+spec:
+  gatewayClassName: istio
+  listeners:
+  - name: https
+    port: 443
+    protocol: HTTPS
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - name: kagent-gateway-tls
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: kagent-route
+  namespace: kagent
+spec:
+  parentRefs:
+  - name: kagent-gateway
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: solo-enterprise-ui
+      port: 80
+EOF
+```
+
+Get the LoadBalancer IP:
+```
+kubectl get svc kagent-gateway-istio -n kagent -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+```
+Access via `https://<IP>`
 
 ```
 # Generate the RSA key
@@ -225,11 +274,9 @@ oidc:
   secret: ${BACKEND_CLIENT_SECRET}
 rbac:
   roleMapping:
-    roleMapper: "claims.Groups.transformList(i, v, v in rolesMap, rolesMap[v])"
+    roleMapper: "has(claims.Groups) ? claims.Groups.transformList(i, v, v in rolesMap, rolesMap[v]) : (has(claims.groups) ? claims.groups.transformList(i, v, v in rolesMap, rolesMap[v]) : [])"
     roleMappings:
-      admins: "global.Admin"
-      readers: "global.Reader"
-      writers: "global.Writer"
+      966e120a-237f-44fd-9b86-049da1106a93: "global.Admin"
 providers:
   default: anthropic
   anthropic:
@@ -239,7 +286,7 @@ otel:
     enabled: true
     exporter:
       otlp:
-        endpoint: solo-enterprise-telemetry-collector.kagent.svc.cluster.local:4317
+        endpoint: kagent-enterprise-ui.kagent.svc.cluster.local:4317
         insecure: true
 controller:
   image:
@@ -257,4 +304,16 @@ kubectl label namespaces kagent istio.io/dataplane-mode=ambient
 
 ```
 kubectl get pods -n kagent
+```
+
+### For Entra
+
+The RBAC configs in kagent-mgmt and kagent need to be updated with your Entra Group Object ID
+
+```
+https://learn.microsoft.com/en-us/azure/aks/enable-authentication-microsoft-entra-id#non-interactive-sign-in-with-kubelogin
+```
+
+```
+brew tap azure/kubelogin && brew install azure/kubelogin/kubelogin 2>&1 || echo "---" && brew search azure/kubelogin
 ```
