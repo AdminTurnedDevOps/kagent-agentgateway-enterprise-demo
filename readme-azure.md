@@ -2,8 +2,6 @@
 
 ## Env Vars
 ```
-export GLOO_GATEWAY_LICENSE_KEY=
-
 export AGENTGATEWAY_LICENSE_KEY=
 
 export ANTHROPIC_API_KEY=
@@ -29,10 +27,6 @@ chmod +x ~/.istioctl/bin/istioctl
 
 export PATH=${HOME}/.istioctl/bin:${PATH}
 istioctl version --remote=false
-```
-
-```
-kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml 
 ```
 
 ```
@@ -93,7 +87,7 @@ excludeNamespaces:
 global:
   hub: ${REPO}
   tag: ${ISTIO_IMAGE}
-  #platform: gke
+  platform: gke
 profile: ambient
 cni:
   priorityClassName: ""
@@ -135,6 +129,10 @@ kubectl get pods -n istio-system
 ## Install Agentgateway
 
 ```
+kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml 
+```
+
+```
 helm upgrade -i agentgateway-crds oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway-crds \
   --create-namespace \
   --namespace agentgateway-system \
@@ -150,7 +148,7 @@ helm upgrade -i agentgateway oci://us-docker.pkg.dev/solo-public/enterprise-agen
 ```
 
 ```
-kubectl get pods -n gloo-system
+kubectl get pods -n agentgateway-system
 ```
 
 ## Install Kagent

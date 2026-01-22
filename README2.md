@@ -74,6 +74,9 @@ license:
 EOF
 ```
 
+kubectl create secret generic kagent-anthropic \                                                           --from-literal=ANTHROPIC_API_KEY='' \
+-n kagent
+
 ```
 helm upgrade --install istio-cni oci://${HELM_REPO}/cni \
 --namespace istio-system \
@@ -156,7 +159,7 @@ kubectl get pods -n agentgateway-system
 ```
 export KAGENT_MGMT_ENT_VERSION=0.2.0
 
-export KAGENT_MGMT_ENT_VERSION=0.2.1-nightly-2026-01-16-e2b3db5b
+export KAGENT_MGMT_ENT_VERSION=0.2.1-2026-01-19-main-efe00fbf
 export KAGENT_ENT_VERSION=0.2.1-nightly-2026-01-11-ae65f848
 ```
 

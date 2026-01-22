@@ -6,3 +6,5 @@
 *terraform.tfstate.backup
 *terraform.tfvars
 *terraform.tfstate.lock.info
+
+*readme-azure.md*
