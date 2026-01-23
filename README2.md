@@ -159,8 +159,8 @@ kubectl get pods -n agentgateway-system
 ```
 export KAGENT_MGMT_ENT_VERSION=0.2.0
 
-export KAGENT_MGMT_ENT_VERSION=0.2.1-2026-01-19-main-efe00fbf
-export KAGENT_ENT_VERSION=0.2.1-nightly-2026-01-11-ae65f848
+export KAGENT_MGMT_ENT_VERSION=0.3.1-nightly-2026-01-22-2da5a42b
+export KAGENT_ENT_VERSION=0.3.2-nightly-2026-01-23-c9c891a5
 ```
 
 ```
@@ -171,6 +171,8 @@ oci://us-docker.pkg.dev/developers-369321/solo-enterprise-public-nonprod/charts/
 -f - <<EOF
 products:
   kagent:
+    enabled: true
+  agentgateway:
     enabled: true
 imagePullSecrets: []
 global:
@@ -254,6 +256,7 @@ kmcp:
 EOF
 ```
 
+FOR ACCESS POLICIES TO WORK:
 ```
 kubectl label namespaces kagent istio.io/dataplane-mode=ambient
 ```

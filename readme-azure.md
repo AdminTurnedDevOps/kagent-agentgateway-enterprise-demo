@@ -154,16 +154,21 @@ kubectl get pods -n agentgateway-system
 ## Install Kagent
 
 ```
-export KAGENT_MGMT_ENT_VERSION=0.2.0
-export KAGENT_ENT_VERSION=0.2.1-nightly-2026-01-11-ae65f848
+export KAGENT_MGMT_ENT_VERSION=0.3.1-nightly-2026-01-22-2da5a42b
+export KAGENT_ENT_VERSION=0.3.2-nightly-2026-01-23-c9c891a5
 ```
 
 ```
 helm upgrade -i kagent-mgmt \
-oci://us-docker.pkg.dev/solo-public/solo-enterprise-helm/charts/management \
+oci://us-docker.pkg.dev/developers-369321/solo-enterprise-public-nonprod/charts/management \
 -n kagent --create-namespace \
 --version $KAGENT_MGMT_ENT_VERSION \
 -f - <<EOF
+products:
+  kagent:
+    enabled: true
+  agentgateway:
+    enabled: true
 imagePullSecrets: []
 global:
   imagePullPolicy: IfNotPresent
@@ -177,7 +182,8 @@ rbac:
     roleMappings:
       966e120a-237f-44fd-9b86-049da1106a93: "global.Admin"
 service:
-  type: ClusterIP
+  type: LoadBalancer
+  clusterIP: ""
 ui:
   backend:
     oidc:
@@ -242,7 +248,7 @@ EOF
 
 Get the LoadBalancer IP:
 ```
-kubectl get svc kagent-gateway-istio -n kagent -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+kubectl get svc kagent-gateway -n kagent -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
 ```
 Access via `https://<IP>`
 
@@ -279,6 +285,34 @@ providers:
   default: anthropic
   anthropic:
     apiKey: ${ANTHROPIC_API_KEY}
+kagent-tools:
+  enabled: true
+agents:
+  k8s-agent:
+    enabled: true
+  kgateway-agent:
+    enabled: true
+  istio-agent:
+    enabled: true
+  promql-agent:
+    enabled: true
+  observability-agent:
+    enabled: true
+  argo-rollouts-agent:
+    enabled: true
+  helm-agent:
+    enabled: true
+  cilium-policy-agent:
+    enabled: true
+  cilium-manager-agent:
+    enabled: true
+  cilium-debug-agent:
+    enabled: true
+tools:
+  grafana-mcp:
+    enabled: true
+  querydoc:
+    enabled: true
 otel:
   tracing:
     enabled: true
