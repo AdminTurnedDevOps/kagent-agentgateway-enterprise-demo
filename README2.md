@@ -2,9 +2,9 @@
 
 ## Env Vars
 ```
-export AGENTGATEWAY_LICENSE_KEY=
-
+export SOLO_ISTIO_LICENSE_KEY=
 export ANTHROPIC_API_KEY=
+export AGENTGATEWAY_LICENSE_KEY=
 ```
 
 ## Ambient Config
@@ -14,7 +14,6 @@ export ISTIO_IMAGE=${ISTIO_VERSION}-solo
 export REPO_KEY=d11c80c0c3fc
 export REPO=us-docker.pkg.dev/gloo-mesh/istio-${REPO_KEY}
 export HELM_REPO=us-docker.pkg.dev/gloo-mesh/istio-helm-${REPO_KEY}
-export SOLO_ISTIO_LICENSE_KEY=
 ```
 
 ```
@@ -74,9 +73,6 @@ license:
 EOF
 ```
 
-kubectl create secret generic kagent-anthropic \                                                           --from-literal=ANTHROPIC_API_KEY='' \
--n kagent
-
 ```
 helm upgrade --install istio-cni oci://${HELM_REPO}/cni \
 --namespace istio-system \
@@ -126,7 +122,7 @@ kubectl patch daemonset ztunnel -n istio-system -p '{"spec":{"template":{"spec":
 ```
 
 ```
-kubectl get pods -n istio-system 
+kubectl get pods -n istio-system -w
 ```
 
 ## Install Agentgateway
@@ -139,13 +135,13 @@ kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/downloa
 helm upgrade -i agentgateway-crds oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway-crds \
   --create-namespace \
   --namespace agentgateway-system  \
-  --version 2.1.0-rc.2
+  --version 2.1.1
 ```
 
 ```
 helm upgrade -i agentgateway oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway \
   -n agentgateway-system  \
-  --version 2.1.0-rc.2 \
+  --version 2.1.1 \
   --set agentgateway.enabled=true \
   --set licensing.licenseKey=${AGENTGATEWAY_LICENSE_KEY}
 ```
@@ -157,10 +153,10 @@ kubectl get pods -n agentgateway-system
 ## Install Kagent
 
 ```
-export KAGENT_MGMT_ENT_VERSION=0.2.0
+export KAGENT_MGMT_ENT_VERSION=0.3.5
 
-export KAGENT_MGMT_ENT_VERSION=0.3.1-nightly-2026-01-22-2da5a42b
-export KAGENT_ENT_VERSION=0.3.2-nightly-2026-01-23-c9c891a5
+export KAGENT_MGMT_ENT_VERSION=0.3.9-nightly-2026-03-13-eaa3f022
+export KAGENT_ENT_VERSION=0.3.9-nightly-2026-03-13-eaa3f022
 ```
 
 ```
@@ -174,6 +170,7 @@ products:
     enabled: true
   agentgateway:
     enabled: true
+    namespace: agentgateway-system
 imagePullSecrets: []
 global:
   imagePullPolicy: IfNotPresent
@@ -194,6 +191,9 @@ ui:
     oidc:
       clientId: ${OIDC_BACKEND}
       secret: ${BACKEND_CLIENT_SECRET}
+    extraEnvs:
+      OIDC_INSECURE_SKIP_VERIFY:
+        value: "true"
   frontend:
     oidc:
       clientId: ${OIDC_FRONTEND}
@@ -246,19 +246,12 @@ otel:
       otlp:
         endpoint: solo-enterprise-telemetry-collector.kagent.svc.cluster.local:4317
         insecure: true
-controller:
-  image:
-    repository: kagent-enterprise-public-nonprod
-kmcp:
-  enabled: true
-  image:
-    repository: kagent-enterprise-public-nonprod
 EOF
 ```
 
 FOR ACCESS POLICIES TO WORK:
 ```
-kubectl label namespaces kagent istio.io/dataplane-mode=ambient
+kubectl label namespaces YOUR_NAMESPACE_WHERE_RESOURCES_ARE_RUNNING istio.io/dataplane-mode=ambient
 ```
 
 ```
